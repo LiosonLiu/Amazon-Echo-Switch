@@ -13,8 +13,6 @@ PIN
 #include <WiFiUdp.h>
 #include <functional>
 
-
-
 const int LED_GREEN = 13;
 const int RELAY 	 = 12;
 const int SWITCH_PIN    = 0;
@@ -24,7 +22,6 @@ boolean connectWifi();
 boolean connectUDP();
 void startHttpServer();
 void CheckWifiSwitch(void);
-void CheckWiFiStatus(void);
 void ReadDataFromEEPROM();
 unsigned int localPort = 1900;      // local port to listen on
 
@@ -51,10 +48,11 @@ void setup()
   pinMode(LED_GREEN, OUTPUT);
   pinMode(RELAY, OUTPUT); 	
   pinMode(SWITCH_PIN, INPUT);
-  digitalWrite(LED_GREEN, HIGH);
+  digitalWrite(LED_GREEN, LOW);
   digitalWrite(RELAY, HIGH);   
+  Serial.println("System Start");
 //  wifiManager.resetSettings();	//test 	
-	wifiManager.autoConnect();	
+  wifiManager.autoConnect();	
   while(!connectUDP())
         {
         }
@@ -66,59 +64,57 @@ void loop()
 //===========================
 {
 CheckWifiSwitch(); 
-CheckWiFiStatus();
 HTTP.handleClient();
 delay(1);
-int packetSize = UDP.parsePacket();
-      
-      if(packetSize) 
-      {
-        Serial.println("");
-        Serial.print("Received UDP packet. Size: ");
-        Serial.println(packetSize);
-        Serial.print(". From ");
-        IPAddress remote = UDP.remoteIP();
-        
-        for (int i =0; i < 4; i++) 
-          {
-          Serial.print(remote[i], DEC);
-          if (i < 3) 
-            {
-            Serial.print(".");
-            }
-          }
-        
-          Serial.print(", port ");
-          Serial.println(UDP.remotePort());
-          int len = UDP.read(packetBuffer, 255);
-        
-          if (len > 0) 
-            {
-            packetBuffer[len] = 0;
-            }
-          Serial.println("");    
-          Serial.println("Data:");
-          for(int i=0;i<packetSize;i++)
-            {   
-            Serial.print(packetBuffer[i]);  
-            } 
-          Serial.println("");      
-
-        String request = packetBuffer;
-        //Serial.println("Request:");
-        //Serial.println(request);
-         
-        if(request.indexOf('M-SEARCH') > 0) 
-          {
-            if(request.indexOf("urn:Belkin:device:**") > 0) 
-            {
-                Serial.println("Responding to search request ...");
-                respondToSearch();
-            }
-          }    
-      }
-        
+if(wifiConnected)
+	{
+    if(udpConnected)
+    	{  
+		int packetSize = UDP.parsePacket();      
+		if(packetSize) 
+      		{
+        	Serial.println("");
+        	Serial.print("Received UDP packet. Size: ");
+        	Serial.println(packetSize);
+        	Serial.print(". From ");
+        	IPAddress remote = UDP.remoteIP();        
+        	for (int i =0; i < 4; i++) 
+          		{
+          		Serial.print(remote[i], DEC);
+          		if (i < 3) 
+            		{
+            		Serial.print(".");
+            		}
+          		}        
+          	Serial.print(", port ");
+          	Serial.println(UDP.remotePort());
+          	int len = UDP.read(packetBuffer, 255);
+          	if (len > 0) 
+            	{
+            	packetBuffer[len] = 0;
+            	}
+          	Serial.println("");    
+          	Serial.println("Data:");
+          	for(int i=0;i<packetSize;i++)
+            	{   
+            	Serial.print(packetBuffer[i]);  
+            	} 
+          	Serial.println("");      
+        	String request = packetBuffer;
+        	//Serial.println("Request:");
+        	//Serial.println(request);
+        	if(request.indexOf('M-SEARCH') > 0) 
+          		{
+            	if(request.indexOf("urn:Belkin:device:**") > 0) 
+            		{
+                	Serial.println("Responding to search request ...");
+                	respondToSearch();
+            		}
+          		}    
+      		}        
       delay(10);
+    	}
+    }
 }
 //=================
 void ReadDataFromEEPROM()
@@ -151,22 +147,6 @@ void ReadDataFromEEPROM()
   Serial.println(Password);
   Serial.print("DEVICE NAME = ");
   Serial.println(DeviceName); 
-}
-//=================
-void CheckWiFiStatus(void)
-//=================
-{
-if(WiFi.status() != WL_CONNECTED)
-  {
-      while(!connectWifi())
-        { 
-        }
-      while(!connectUDP())
-        {
-        }
-      startHttpServer();
-  }
-digitalWrite(LED_GREEN, LOW);  
 }
 //=================
 void CheckWifiSwitch(void)
@@ -213,17 +193,15 @@ void prepareIds()
 void respondToSearch() 
 //=================
 {
-    Serial.println("");
-    Serial.print("Sending response to ");
-    Serial.println(UDP.remoteIP());
-    Serial.print("Port : ");
-    Serial.println(UDP.remotePort());
-
-    IPAddress localIP = WiFi.localIP();
-    char s[16];
-    sprintf(s, "%d.%d.%d.%d", localIP[0], localIP[1], localIP[2], localIP[3]);
-
-    String response = 
+Serial.println("");
+Serial.print("Sending response to ");
+Serial.println(UDP.remoteIP());
+Serial.print("Port : ");
+Serial.println(UDP.remotePort());
+IPAddress localIP = WiFi.localIP();
+char s[16];
+sprintf(s, "%d.%d.%d.%d", localIP[0], localIP[1], localIP[2], localIP[3]);
+String response = 
          "HTTP/1.1 200 OK\r\n"
          "CACHE-CONTROL: max-age=86400\r\n"
          "DATE: Fri, 15 Apr 2016 04:56:29 GMT\r\n"
@@ -235,12 +213,10 @@ void respondToSearch()
          "ST: urn:Belkin:device:**\r\n"
          "USN: uuid:" + persistent_uuid + "::urn:Belkin:device:**\r\n"
          "X-User-Agent: redsonic\r\n\r\n";
-
-    UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
-    UDP.write(response.c_str());
-    UDP.endPacket();                    
-
-     Serial.println("Response sent !");
+UDP.beginPacket(UDP.remoteIP(), UDP.remotePort());
+UDP.write(response.c_str());
+UDP.endPacket();                    
+Serial.println("Response sent !");
 }
 //=================
 void startHttpServer() 
