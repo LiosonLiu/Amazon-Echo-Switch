@@ -14,6 +14,7 @@ PIN
 #include <functional>
 
 const int LED_GREEN = 13;
+// LED_RED is not physically connected
 const int RELAY 	 = 12;
 const int SWITCH_PIN    = 0;
 
@@ -120,33 +121,17 @@ if(wifiConnected)
 void ReadDataFromEEPROM()
 //=================
 {
-  EEPROM.begin(128);
-  int index=0;
-  int len=0;
-  len=EEPROM.read(0);
-  index++;
-  for(int i=0;i<len;i++)
-  {
-    SSID+=char(EEPROM.read(index)); index++;
-  }
-  len=EEPROM.read(index);
-  index++;
-  for(int i=0;i<len;i++)
-  {
-    Password+=char(EEPROM.read(index)); index++;
-  }
-  len=EEPROM.read(index);
-  index++;
-  for(int i=0;i<len;i++)
-  {
-    DeviceName+=char(EEPROM.read(index)); index++;
-  }
-  Serial.print("SSID = ");
-  Serial.println(SSID);
-  Serial.print("PASSWORD = ");
-  Serial.println(Password);
-  Serial.print("DEVICE NAME = ");
-  Serial.println(DeviceName); 
+	EEPROM.begin(512);
+	int j=0;	
+	for(int i=0;i<32;i++)		{SSID +=char(EEPROM.read(j)); j++;}
+	for(int i=0;i<64;i++)		{Password +=char(EEPROM.read(j)); j++;}
+	for(int i=0;i<64;i++)		{DeviceName +=char(EEPROM.read(j)); j++;}
+  Serial.print("SSID = ");	
+	Serial.println(SSID);	
+	Serial.print("PASSWORD = ");	
+	Serial.println(Password);
+	Serial.print("DEVICE NAME = ");
+	Serial.println(DeviceName);
 }
 //=================
 void CheckWifiSwitch(void)
