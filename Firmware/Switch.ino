@@ -49,8 +49,14 @@ void setup()
   pinMode(LED_GREEN, OUTPUT);
   pinMode(RELAY, OUTPUT); 	
   pinMode(SWITCH_PIN, INPUT);
-  digitalWrite(LED_GREEN, LOW);
   digitalWrite(RELAY, HIGH);   
+	for(int i=0;i<6;i++)  
+		{
+  	digitalWrite(LED_GREEN, LOW);
+  	delay(500);
+  	digitalWrite(LED_GREEN, HIGH);
+  	delay(500);  
+		}  
   Serial.println("System Start");
 //  wifiManager.resetSettings();	//test 	
   wifiManager.autoConnect();	
