@@ -157,6 +157,11 @@ if(!digitalRead(SWITCH_PIN))
     if(j>25)
     {
       Serial.println("RESETING WiFi SSID/PASSWORD/DEVICE NAME");
+      for(int k=0;k<160;k++)
+      	{
+      		EEPROM.write(k,0);
+      	}
+      EEPROM.commit();
       wifiManager.resetSettings();
       wifiManager.autoConnect();      
    		while(!connectUDP())
