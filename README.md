@@ -5,6 +5,9 @@ Build a cheap swich that can be controlled by Amazon Alexa.
 
 Part you need - 1.SONOFF switch 2.USB-UART board for download the code. 
 
+*Board type: Generic ESP8266 Module
+*Flash size: 1M(512KSPIFF) 
+
 ******Process******
 
 1. Download the code.
