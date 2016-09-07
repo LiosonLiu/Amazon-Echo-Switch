@@ -73,10 +73,6 @@ void loop()
 CheckWifiSwitch(); 
 HTTP.handleClient();
 delay(1);
-if(wifiConnected)
-	{
-    if(udpConnected)
-    	{  
 		int packetSize = UDP.parsePacket();      
 		if(packetSize) 
       		{
@@ -120,8 +116,7 @@ if(wifiConnected)
           		}    
       		}        
       delay(10);
-    	}
-    }
+
 }
 //=================
 void ReadDataFromEEPROM()
@@ -293,7 +288,7 @@ void startHttpServer()
             "<root>"
              "<device>"
                 "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
-                "<friendlyName>"+DeviceName+"</friendlyName>"
+                "<friendlyName>"+ DeviceName +"</friendlyName>"
                 "<manufacturer>Belkin International Inc.</manufacturer>"
                 "<modelName>Emulated Socket</modelName>"
                 "<modelNumber>3.1415</modelNumber>"
@@ -313,10 +308,9 @@ void startHttpServer()
             "</root>\r\n"
             "\r\n";
             
-        HTTP.send(200, "text/xml", setup_xml.c_str());
-        
-        Serial.print("Sending :");
-        Serial.println(setup_xml);
+        HTTP.send(200, "text/xml", setup_xml.c_str());       
+        Serial.println("*****Sending*****");
+        Serial.print(setup_xml);
     });
     
     HTTP.begin();  
