@@ -141,9 +141,6 @@ boolean WiFiManager::autoConnect(char const *apName, char const *apPassword) {
 	for(int i=0;i<32;i++)	{ssid += char(EEPROM.read(j)); j++;}
 	for(int i=0;i<64;i++)	{pass += char(EEPROM.read(j)); j++;}
 	for(int i=0;i<64;i++)	{dev_name += char(EEPROM.read(j)); j++;}	
-	Serial.println(ssid);
-	Serial.println(pass);
-	Serial.println(dev_name);
 
   // attempt to connect; should it fail, fall back to AP
   WiFi.mode(WIFI_STA);
@@ -527,9 +524,9 @@ void WiFiManager::handleWifiSave() {
   _pass = server->arg("p").c_str();
 	_dev_name = server->arg("n").c_str();
 	int j=0;	
-	for(int i=0;i<32;i++)		{EEPROM.write(j,_ssid[i]); Serial.print(_ssid[i]); j++;}
-	for(int i=0;i<64;i++)		{EEPROM.write(j,_pass[i]); Serial.print(_pass[i]); j++;}
-	for(int i=0;i<64;i++)		{EEPROM.write(j,_dev_name[i]); Serial.print(_dev_name[i]); j++;}	
+	for(int i=0;i<32;i++)		{EEPROM.write(j,_ssid[i]); j++;}
+	for(int i=0;i<64;i++)		{EEPROM.write(j,_pass[i]); j++;}
+	for(int i=0;i<64;i++)		{EEPROM.write(j,_dev_name[i]); j++;}	
 	EEPROM.commit();	
   //parameters
   for (int i = 0; i < _paramsCount; i++) 

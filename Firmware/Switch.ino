@@ -13,13 +13,12 @@ PIN
 #include <WiFiUdp.h>
 #include <functional>
 
-const int LED_GREEN = 13;
+const int LED_GREEN 	= 13;
 // LED_RED is not physically connected
-const int RELAY 	 = 12;
-const int SWITCH_PIN    = 0;
+const int RELAY 	 		= 12;
+const int SWITCH_PIN  = 0;
 
 void prepareIds();
-boolean connectWifi();
 boolean connectUDP();
 void startHttpServer();
 void CheckWifiSwitch(void);
@@ -31,7 +30,6 @@ boolean udpConnected = false;
 IPAddress ipMulti(239, 255, 255, 250);
 unsigned int portMulti = 1900;      // local port to listen on
 ESP8266WebServer HTTP(80);
-boolean wifiConnected = false;
 char packetBuffer[UDP_TX_PACKET_MAX_SIZE]; //buffer to hold incoming packet,
 
 String serial;
@@ -58,14 +56,14 @@ void setup()
   	delay(500);  
 		}  
   Serial.println("System Start");
+  ReadDataFromEEPROM();
 //  wifiManager.resetSettings();	//test 	
   wifiManager.autoConnect();	
   while(!connectUDP())
         {
         }
   startHttpServer();
-  ReadDataFromEEPROM();
-}
+ }
 //===========================
 void loop() 
 //===========================
@@ -73,65 +71,83 @@ void loop()
 CheckWifiSwitch(); 
 HTTP.handleClient();
 delay(1);
-		int packetSize = UDP.parsePacket();      
-		if(packetSize) 
-      		{
-        	Serial.println("");
-        	Serial.print("Received UDP packet. Size: ");
-        	Serial.println(packetSize);
-        	Serial.print(". From ");
-        	IPAddress remote = UDP.remoteIP();        
-        	for (int i =0; i < 4; i++) 
-          		{
-          		Serial.print(remote[i], DEC);
-          		if (i < 3) 
-            		{
-            		Serial.print(".");
-            		}
-          		}        
-          	Serial.print(", port ");
-          	Serial.println(UDP.remotePort());
-          	int len = UDP.read(packetBuffer, 255);
-          	if (len > 0) 
-            	{
-            	packetBuffer[len] = 0;
-            	}
-          	Serial.println("");    
-          	Serial.println("Data:");
-          	for(int i=0;i<packetSize;i++)
-            	{   
-            	Serial.print(packetBuffer[i]);  
-            	} 
-          	Serial.println("");      
-        	String request = packetBuffer;
-        	//Serial.println("Request:");
-        	//Serial.println(request);
-        	if(request.indexOf('M-SEARCH') > 0) 
-          		{
-            	if(request.indexOf("urn:Belkin:device:**") > 0) 
-            		{
-                	Serial.println("Responding to search request ...");
-                	respondToSearch();
-            		}
-          		}    
-      		}        
-      delay(10);
+if(WiFi.status() != WL_CONNECTED)
+	{
+  wifiManager.autoConnect();	
+  while(!connectUDP())
+     {
+     }
+  startHttpServer();
+	}
 
+int packetSize = UDP.parsePacket();      
+if(packetSize) 
+	{
+  Serial.println("");
+  Serial.print("Received UDP packet. Size: ");
+  Serial.println(packetSize);
+  Serial.print(". From ");
+  IPAddress remote = UDP.remoteIP();        
+  for (int i =0; i < 4; i++) 
+  	{
+    Serial.print(remote[i], DEC);
+    if (i < 3)	{Serial.print(".");}
+    }        
+  Serial.print(", port ");
+  Serial.println(UDP.remotePort());
+  int len = UDP.read(packetBuffer, 255);
+  if (len > 0)	{packetBuffer[len] = 0;}
+  Serial.println("");    
+  Serial.println("Data:");
+  for(int i=0;i<packetSize;i++)
+   	{   
+   	Serial.print(packetBuffer[i]);  
+   	} 
+  Serial.println("");      
+  String request = packetBuffer;
+  //Serial.println("Request:");
+  //Serial.println(request);
+  if(request.indexOf('M-SEARCH') > 0) 
+  	{
+   	if(request.indexOf("urn:Belkin:device:**") > 0) 
+     		{
+       	Serial.println("Responding to search request ...");
+       	respondToSearch();
+     		}
+  	}    
+ 	}        
+delay(10);
 }
+
 //=================
 void ReadDataFromEEPROM()
 //=================
 {
 	EEPROM.begin(512);
-	int j=0;	
-	for(int i=0;i<32;i++)		{SSID +=char(EEPROM.read(j)); j++;}
-	for(int i=0;i<64;i++)		{Password +=char(EEPROM.read(j)); j++;}
-	for(int i=0;i<64;i++)		{DeviceName +=char(EEPROM.read(j)); j++;}
+	int j=0;		
+	for(int i=0;i<32;i++)		
+		{
+		if(char(EEPROM.read(j)==0x00))	{j=32; break;}	
+		SSID +=char(EEPROM.read(j)); 
+		j++;
+		}
+	for(int i=0;i<64;i++)		
+		{
+		if(char(EEPROM.read(j)==0x00))	{j=96; break;}	
+		Password +=char(EEPROM.read(j)); 
+		j++;
+		}
+	for(int i=0;i<64;i++)		
+		{
+		if(char(EEPROM.read(j)==0x00))	{break;}
+		DeviceName +=char(EEPROM.read(j)); 
+		j++;
+		}		
   Serial.print("SSID = ");	
 	Serial.println(SSID);	
 	Serial.print("PASSWORD = ");	
 	Serial.println(Password);
-	Serial.print("DEVICE NAME = ");
+	Serial.print("DEVICE NAME =");
 	Serial.println(DeviceName);
 }
 //=================
@@ -226,7 +242,7 @@ void startHttpServer()
       //}
   
       String request = HTTP.arg(0);      
-      Serial.print("Received request:");
+      Serial.print("request:");
       Serial.println(request);
  
       if(request.indexOf("<BinaryState>1</BinaryState>") > 0) {         //ON
@@ -288,7 +304,7 @@ void startHttpServer()
             "<root>"
              "<device>"
                 "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
-                "<friendlyName>"+ DeviceName +"</friendlyName>"
+                "<friendlyName>"+DeviceName+"</friendlyName>"
                 "<manufacturer>Belkin International Inc.</manufacturer>"
                 "<modelName>Emulated Socket</modelName>"
                 "<modelNumber>3.1415</modelNumber>"
@@ -297,7 +313,7 @@ void startHttpServer()
                 "<binaryState>0</binaryState>"
                 "<serviceList>"
                   "<service>"
-                      "<serviceType>urn:Belkin:service:basicevent:0</serviceType>"
+                      "<serviceType>urn:Belkin:service:basicevent:1</serviceType>"
                       "<serviceId>urn:Belkin:serviceId:basicevent1</serviceId>"
                       "<controlURL>/upnp/control/basicevent1</controlURL>"
                       "<eventSubURL>/upnp/event/basicevent1</eventSubURL>"
@@ -308,67 +324,16 @@ void startHttpServer()
             "</root>\r\n"
             "\r\n";
             
-        HTTP.send(200, "text/xml", setup_xml.c_str());       
-        Serial.println("*****Sending*****");
-        Serial.print(setup_xml);
+        HTTP.send(200, "text/xml", setup_xml.c_str());
+        
+        Serial.println("***** Sending *****");
+        Serial.println(setup_xml);
     });
     
     HTTP.begin();  
     Serial.println("HTTP Server started ..");
 }
-
-
       
-// connect to wifi – returns true if successful or false if not
-//=================
-boolean connectWifi()
-//=================
-{
-  boolean state = true;
-  boolean blink = false;
-  int i = 0;
-  
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(SSID.c_str(), Password.c_str());
-  Serial.println("");
-  Serial.println("Connecting to WiFi");
-
-  // Wait for connection
-  Serial.print("Connecting ...");
-  while (WiFi.status() != WL_CONNECTED) {
-    if(blink)
-        {
-        blink = false; 
-        digitalWrite(LED_GREEN, HIGH);
-        }
-    else
-        {
-        blink = true;
-        digitalWrite(LED_GREEN, LOW);
-        }      
-    delay(500);
-    Serial.print(".");
-    if (i > 10){
-      state = false;
-      break;  
-    }
-    i++; 
-  }
-  
-  if (state){
-    Serial.println("");
-    Serial.print("Connected to ");
-    Serial.println(SSID);
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
-  }
-  else {
-    Serial.println("");
-    Serial.println("Connection failed.");
-  }
-  
-  return state;
-}
 //=================
 boolean connectUDP()
 //=================
